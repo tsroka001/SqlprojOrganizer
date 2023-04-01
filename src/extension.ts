@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
         // The code you place here will be executed every time your command is executed
         try {
           process(uri.fsPath);
-          vscode.window.showInformationMessage("Hello World! " + uri.fsPath);
+          vscode.window.showInformationMessage("Processed " + uri.fsPath);
         } catch (error: any) {
           vscode.window.showInformationMessage(error.message);
         }

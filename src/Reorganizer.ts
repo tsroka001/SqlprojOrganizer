@@ -25,7 +25,37 @@ const process = (path: string) => {
 
   let igs = proj?.map((x: any) => {
     if (x.ItemGroup) {
-      return x;
+      let values: string[] = [];
+      x.ItemGroup.forEach((ig: any) => {
+        if (ig.Folder || ig.Build) {
+          if (ig[":@"]) {
+            values.push(ig[":@"]["@_Include"]);
+          }
+        }
+      });
+      if (values.length > 0) {
+        values.sort();
+        let ix = 0;
+        values.forEach((v: any) => {
+          x.ItemGroup[ix] = {
+            "#text": "\n    "
+          };
+          ix++;
+          x.ItemGroup[ix] = {
+            "Build": [],
+            ":@": {
+              "@_Include": v
+            }
+          };
+          ix++;
+
+        });
+        x.ItemGroup[ix] = {
+          "#text": "\n    "
+        };
+
+        console.dir(x.ItemGroup);
+      }
     } else {
       return x;
     }
@@ -42,7 +72,7 @@ const process = (path: string) => {
   const builder = new XMLBuilder(builderOptions);
   const xmlContent = builder.build(jObj);
 
-  console.log(xmlContent);
+  console.log("xmlContent");
 };
 
 export default process;

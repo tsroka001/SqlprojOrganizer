@@ -23,35 +23,47 @@ const process = (path: string) => {
 
   let proj = jObj.find((x: any) => x.Project)?.Project;
 
-  let igs = proj?.map((x: any) => {
+  proj?.map((x: any) => {
     if (x.ItemGroup) {
+      let itemType: string = "";
       let values: string[] = [];
       x.ItemGroup.forEach((ig: any) => {
         if (ig.Folder || ig.Build) {
+          ig.Folder ? (itemType = "Folder") : (itemType = "Build");
           if (ig[":@"]) {
             values.push(ig[":@"]["@_Include"]);
           }
         }
       });
+
       if (values.length > 0) {
         values.sort();
         let ix = 0;
         values.forEach((v: any) => {
           x.ItemGroup[ix] = {
-            "#text": "\n    "
+            "#text": "\n    ",
           };
           ix++;
-          x.ItemGroup[ix] = {
-            "Build": [],
-            ":@": {
-              "@_Include": v
-            }
-          };
-          ix++;
+          if (itemType === "Folder") {
+            x.ItemGroup[ix] = {
+              Folder: [],
+              ":@": {
+                "@_Include": v,
+              },
+            };
+          } else {
+            x.ItemGroup[ix] = {
+              Build: [],
+              ":@": {
+                "@_Include": v,
+              },
+            };
+          }
 
+          ix++;
         });
         x.ItemGroup[ix] = {
-          "#text": "\n    "
+          "#text": "\n    ",
         };
 
         console.dir(x.ItemGroup);

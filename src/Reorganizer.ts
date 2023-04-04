@@ -1,92 +1,75 @@
-import {
-  XMLParser,
-  XMLBuilder,
-  XmlBuilderOptions,
-  X2jOptions,
-} from "fast-xml-parser";
 import fs = require("fs");
+import { ParserOptions, parseString, Builder } from "xml2js";
 
-const process = (path: string) => {
-  const xmlData = fs.readFileSync(path, "utf8");
+const process = (path: string) : string  => {
+  let xmlData = fs.readFileSync(path, "utf8");
+  let opts: ParserOptions = {};
 
-  const parserOptions: Partial<X2jOptions> = {
-    ignoreAttributes: false,
-    parseTagValue: false,
-    preserveOrder: true,
-    processEntities: false,
-    commentPropName: "#comment",
-    trimValues: false,
-  };
-  const parser = new XMLParser(parserOptions);
+  let outString: string = "";
 
-  let jObj = parser.parse(xmlData);
+  parseString(xmlData, opts, function (err: Error | null, parsedJSON: any){
+    if(err){
+      outString = err.message;
+      return;
+    }
 
-  let proj = jObj.find((x: any) => x.Project)?.Project;
+    let proj = parsedJSON.Project;
+    let itemGroups = proj.ItemGroup;
 
-  if(proj){
-    proj.forEach((x: any) => {
-      if (x.ItemGroup) {
-        let itemType: string = "";
-        let values: string[] = [];
+    let combinedPackageReferences = [];
+    let combinedFolders = [];
+    let combinedBuilds = [];
+    let combinedNone = [];
 
-        //find all values that need to be sorted
-        x.ItemGroup.forEach((ig: any) => {
-          if (ig.Folder || ig.Build) {
-            ig.Folder ? (itemType = "Folder") : (itemType = "Build");
-            if (ig[":@"]) {
-              values.push(ig[":@"]["@_Include"]);
-            }
-          }
-        });
-
-        //recreate sorted array
-        if (values.length > 0) {
-          values.sort();
-          let ix = 0;
-          values.forEach((v: any) => {
-            x.ItemGroup[ix] = {
-              "#text": "\n    ",
-            };
-            ix++;
-            if (itemType === "Folder") {
-              x.ItemGroup[ix] = {
-                Folder: [],
-                ":@": {
-                  "@_Include": v,
-                },
-              };
-            } else {
-              x.ItemGroup[ix] = {
-                Build: [],
-                ":@": {
-                  "@_Include": v,
-                },
-              };
-            }
-  
-            ix++;
-          });
-          x.ItemGroup[ix] = {
-            "#text": "\n    ",
-          };
-        }
+    //Sort items to minimize the number of groups
+    for (let itemGroup of itemGroups) {
+      if (itemGroup.PackageReference) {
+        combinedPackageReferences.push(...itemGroup.PackageReference);
       }
-    });
-  }
- 
+      if (itemGroup.Folder) {
+        combinedFolders.push(...itemGroup.Folder);
+      }
+      if (itemGroup.Build) {
+        combinedBuilds.push(...itemGroup.Build);
+      }
+      if (itemGroup.None) {
+        combinedNone.push(...itemGroup.None);
+      }
+    }
 
-  let builderOptions: Partial<XmlBuilderOptions> = {
-    ignoreAttributes: false,
-    preserveOrder: true,
-    commentPropName: "#comment",
-    processEntities: false,
-    suppressEmptyNode: true,
-  };
+    //Clear the item groups and add the sorted items back in
+    itemGroups.length = 0;
+    itemGroups.push(
+      { PackageReference: combinedPackageReferences },
+      {
+        Folder: combinedFolders.sort((a: any, b: any) => {
+          return a["$"]["Include"] > b["$"]["Include"] ? 1 : -1;
+        }),
+      },
+      {
+        Build: combinedBuilds.sort((a: any, b: any) => {
+          return a["$"]["Include"] > b["$"]["Include"] ? 1 : -1;
+        }),
+      },
+      {
+        None: combinedNone.sort((a: any, b: any) => {
+          return a["$"]["Include"] > b["$"]["Include"] ? 1 : -1;
+        }),
+      }
+    );
 
-  const builder = new XMLBuilder(builderOptions);
-  const xmlContent = builder.build(jObj);
+    const builder = new Builder();
+    let xmlOutput = builder.buildObject(parsedJSON);
 
-  console.log("xmlContent");
+    if(xmlOutput === xmlData) {
+      outString = ("No changes required to " + path);
+    } else {
+      fs.writeFileSync(path, xmlOutput, "utf8");
+      outString = ("Updated " + path);
+    }
+  });
+
+  return outString;
 };
 
 export default process;

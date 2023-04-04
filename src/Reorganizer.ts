@@ -23,55 +23,57 @@ const process = (path: string) => {
 
   let proj = jObj.find((x: any) => x.Project)?.Project;
 
-  proj?.map((x: any) => {
-    if (x.ItemGroup) {
-      let itemType: string = "";
-      let values: string[] = [];
-      x.ItemGroup.forEach((ig: any) => {
-        if (ig.Folder || ig.Build) {
-          ig.Folder ? (itemType = "Folder") : (itemType = "Build");
-          if (ig[":@"]) {
-            values.push(ig[":@"]["@_Include"]);
-          }
-        }
-      });
+  if(proj){
+    proj.forEach((x: any) => {
+      if (x.ItemGroup) {
+        let itemType: string = "";
+        let values: string[] = [];
 
-      if (values.length > 0) {
-        values.sort();
-        let ix = 0;
-        values.forEach((v: any) => {
+        //find all values that need to be sorted
+        x.ItemGroup.forEach((ig: any) => {
+          if (ig.Folder || ig.Build) {
+            ig.Folder ? (itemType = "Folder") : (itemType = "Build");
+            if (ig[":@"]) {
+              values.push(ig[":@"]["@_Include"]);
+            }
+          }
+        });
+
+        //recreate sorted array
+        if (values.length > 0) {
+          values.sort();
+          let ix = 0;
+          values.forEach((v: any) => {
+            x.ItemGroup[ix] = {
+              "#text": "\n    ",
+            };
+            ix++;
+            if (itemType === "Folder") {
+              x.ItemGroup[ix] = {
+                Folder: [],
+                ":@": {
+                  "@_Include": v,
+                },
+              };
+            } else {
+              x.ItemGroup[ix] = {
+                Build: [],
+                ":@": {
+                  "@_Include": v,
+                },
+              };
+            }
+  
+            ix++;
+          });
           x.ItemGroup[ix] = {
             "#text": "\n    ",
           };
-          ix++;
-          if (itemType === "Folder") {
-            x.ItemGroup[ix] = {
-              Folder: [],
-              ":@": {
-                "@_Include": v,
-              },
-            };
-          } else {
-            x.ItemGroup[ix] = {
-              Build: [],
-              ":@": {
-                "@_Include": v,
-              },
-            };
-          }
-
-          ix++;
-        });
-        x.ItemGroup[ix] = {
-          "#text": "\n    ",
-        };
-
-        console.dir(x.ItemGroup);
+        }
       }
-    } else {
-      return x;
-    }
-  });
+    });
+  }
+ 
 
   let builderOptions: Partial<XmlBuilderOptions> = {
     ignoreAttributes: false,

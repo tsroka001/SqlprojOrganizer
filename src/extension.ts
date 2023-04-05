@@ -1,6 +1,8 @@
 "use strict";
 import * as vscode from "vscode";
-import process from "./Reorganizer";
+import XmlReorganizer from "./Reorganizer"; "./Reorganizer";
+import fs = require("fs");
+import { Builder, Parser } from "xml2js";
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -9,7 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
       "sqlproj-reorganizer.file-menu",
       (uri: vscode.Uri) => {
         try {
-          let res: string = process(uri.fsPath);
+          const parser = new Parser();
+          const builder = new Builder();
+          const xmlReorganizer = new XmlReorganizer(fs, parser, builder);
+          let res: string = xmlReorganizer.process(uri.fsPath);
           vscode.window.showInformationMessage(res);
         } catch (error: any) {
           vscode.window.showInformationMessage(error.message);
@@ -23,7 +28,10 @@ export function activate(context: vscode.ExtensionContext) {
       "sqlproj-reorganizer.ssdt-menu",
       (uri: any) => {
         try {
-          let res: string = process(uri?.element?.fileSystemUri?._fsPath);
+          const parser = new Parser();
+          const builder = new Builder();
+          const xmlReorganizer = new XmlReorganizer(fs, parser, builder);
+          let res: string = xmlReorganizer.process(uri?.element?.fileSystemUri?._fsPath);
           vscode.window.showInformationMessage(res);
         } catch (error: any) {
           vscode.window.showInformationMessage(error.message);

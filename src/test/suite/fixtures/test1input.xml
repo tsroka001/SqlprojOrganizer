@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Project>
+  <ItemGroup>
+    <Compile Include="b.ts"/>
+    <Compile Include="a.ts"/>
+  </ItemGroup>
+</Project>

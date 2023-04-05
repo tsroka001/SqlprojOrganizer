@@ -16,3 +16,8 @@ jobs:
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           dryRun: true
+      - name: Upload Extension Package as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: SqlprojReorganizer
+          path: ${{ steps.packageExtension.outputs.vsixPath }}

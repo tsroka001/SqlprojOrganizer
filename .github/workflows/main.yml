@@ -16,8 +16,9 @@ jobs:
         with:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           dryRun: true
-      - name: Upload Extension Package as Artifact
-        uses: actions/upload-artifact@v2
+      - name: Release with Notes
+        uses: softprops/action-gh-release@v1
         with:
-          name: SqlprojReorganizer
-          path: ${{ steps.packageExtension.outputs.vsixPath }}
+          files: sqlproj-reorganizer-*.vsix
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

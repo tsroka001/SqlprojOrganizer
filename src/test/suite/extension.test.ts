@@ -34,7 +34,7 @@ suite("Extension Test Suite", () => {
         readFileSync: (path: string, encoding: string) => {
           return fs.readFileSync(
             fixturesFolderLocation +
-              "DatabaseProjectAdventureWorks.sqlproj",
+              "test1input.sqlproj",
             "utf8"
           );
         },
@@ -47,7 +47,7 @@ suite("Extension Test Suite", () => {
       const xmlReorganizer = new XmlReorganizer(mockFS, parser, builder);
 
       const expectedOutput = fs.readFileSync(
-        fixturesFolderLocation + "DatabaseProjectAdventureWorksSorted.sqlproj",
+        fixturesFolderLocation + "test1output.sqlproj",
         "utf8"
       );
 
@@ -55,8 +55,6 @@ suite("Extension Test Suite", () => {
 
       const actualOutput = outVal;
 
-
-	  //TODO this currently fails because the input/output is too large, mocha has a 8192 char limit
       assert.strictEqual(actualOutput, expectedOutput);
 
     });
